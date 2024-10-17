@@ -5,7 +5,46 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from concurrent.futures import ThreadPoolExecutor
 import time
+from time import sleep
 import pandas as pd
+
+def get_tabla_por_mes(meteosat):
+    fechas = ["2024-1-1/2024-1-1","2024-2-1/2024-2-1","2024-3-1/2024-3-1","2024-4-1/2024-4-1","2024-5-1/2024-5-1","2024-6-1/2024-6-1","2024-7-1/2024-7-1","2024-8-1/2024-8-1","2024-9-1/2024-9-1","2024-10-1/2024-10-1"]
+    df = pd.DataFrame()
+    tulipan = 0
+    while True and tulipan <= 3:
+            df_temp = pd.DataFrame()
+            for d in range(0,len(fechas)):
+                driver = webdriver.Chrome() #Para Abrir chrome solo ejecutar once
+                url_wunder = f"https://www.wunderground.com/dashboard/pws/{meteosat}/table/{fechas[d]}/monthly"
+                driver.get(url_wunder)
+                #Maximizar ventana
+                driver.maximize_window() 
+                print("intentamos seleccionar Cookies")
+                select_cookies = WebDriverWait(driver,40).until(EC.presence_of_element_located(('xpath','//*[@id="sp_message_iframe_1165301"]')))
+                driver.switch_to.frame(select_cookies)
+                try:
+                    aceptar_cookies = driver.find_element("css selector", "#notice > div.message-component.message-row.cta-buttons-container > div.message-component.message-column.cta-button-column.reject-column > button")
+                    aceptar_cookies.click()
+                    print("Encontrado")
+                except:
+                    print("AY MI CUQUI, no la encuentro")
+
+                driver.switch_to.default_content()
+                sleep(5)
+
+                tabla = driver.find_element("css selector","#main-page-content > div > div > div > lib-history > div.history-tabs > lib-history-table > div > div > div")
+                tabla_text = tabla.text
+                tabla_split = tabla_text.split("\n")
+                tabla_df = pd.DataFrame(tabla_split)
+                df_temp = pd.concat([df_temp,tabla_df],axis=0)
+                driver.quit()
+                sleep(6)
+            df_temp["Municipio"] = municipios_seleccionados[e]
+            df_temp = df_temp.reindex(columns=["Municipio",0])
+            df = pd.concat([df,df_temp],axis=0)
+
+
 
 # Define la función para obtener las estaciones meteorológicas
 def get_estacion_meteorologica(url, municipio):
